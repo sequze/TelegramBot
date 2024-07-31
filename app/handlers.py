@@ -5,20 +5,28 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
 from aiogram.filters.command import CommandObject, Command
 
+from parser import find_abiturient
+
 router = Router()
 directions = {
         "btn1": "Разработка цифровых продуктов (программа реализуется на "
         "английском языке)",
-        "btn2": "Разработка цифровых продуктов (программа реализуется на "
-        "английском языке) (для иностранных граждан)",
         "btn3": "Разработка цифровых продуктов",
-        "btn4": "Разработка цифровых продуктов "
-        "(для приема иностранных граждан)",
         "btn5": "Современная разработка программного обеспечения",
-        "btn6": "Современная разработка программного обеспечения  (для приема "
-        "иностранных граждан)"
 }
 
+urls = {
+    "Разработка цифровых продуктов (программа реализуется на "
+    "английском языке)": "https://abiturient.kpfu.ru/entrant/abit_entrant"
+    "_originals_list?p_open=&p_level=1&p_faculty=47&p_speciality=2021&p_i"
+    "nst=0&p_typeofstudy=1",
+    "Разработка цифровых продуктов": "https://abiturient.kpfu.ru/entrant/abit"
+    "_entrant_originals_list?p_open=&p_level=1&p_faculty=47&p_speciality=1435"
+    "&p_inst=0&p_typeofstudy=1",
+    "Современная разработка программного обеспечения": "https://abiturient.kp"
+    "fu.ru/entrant/abit_entrant_originals_list?p_open=&p_level=1&p_faculty=47"
+    "&p_speciality=1416&p_inst=0&p_typeofstudy=1",
+}
 user_data = {}
 
 
@@ -37,8 +45,11 @@ async def cmd_start(message: types.Message):
 async def cmd_help(message: Message):
     content = Text(
         Bold("Список доступных команд: \n"),
-        Bold("/find"), " <snils_id> - найти себя в списке по снилсу\n",
-        Bold("/select_list"), " - выбрать направление/вуз\n",
+        "Сначала введите снилс и выберите направление\n",
+        Bold("/snils"), " <snils_id> - ввод снилса\n",
+        Bold("/select"), " - выбор направления\n",
+        Bold("/info"), " - информация о введенных данных\n",
+        Bold("/find"), " - найти себя в списке по снилсу\n",
     )
     await message.answer(**content.as_kwargs())
 
@@ -92,8 +103,8 @@ async def cmd_snils(
         user_id = message.from_user.id
         if user_id not in user_data:
             user_data[user_id] = {}
-        user_data[user_id]["snils"] = snils_id
-        await message.answer(snils_id.replace('-', '').replace(' ', ''))
+        user_data[user_id]["snils"] = snils_id.replace(' ', '-')
+        await message.answer("Снилс сохранён")
     except BaseException:
         await message.answer('Ошибка')
 
@@ -112,3 +123,15 @@ async def cmd_info(message: Message):
         await message.answer("Вас нет в базе")
     else:
         await message.answer(print_user(user_id))
+
+
+@router.message(Command("find"))
+async def cmd_find(message: Message):
+    user_id = message.from_user.id
+    if user_id not in user_data or "direction" not in user_data[user_id] or \
+       "snils" not in user_data[user_id]:
+        await message.answer("Вы не ввели снилс или не выбрали направление")
+        return
+    await message.answer(find_abiturient(user_data[user_id]["snils"],
+                                         urls[user_data[user_id]["direction"]])
+                         )
