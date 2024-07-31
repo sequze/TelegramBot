@@ -68,14 +68,6 @@ async def cmd_select(message: Message):
                          reply_markup=builder.as_markup())
 
 
-# Другая клавиатура
-# @router.message(Command("select_list"))
-# async def cmd_select(message: Message):
-
-#     kb = [[types.KeyboardButton(text=i)] for i in directions]
-#     keyboard = types.ReplyKeyboardMarkup(keyboard=kb, one_time_keyboard=True)
-#     await message.answer('список:\n', reply_markup=keyboard)
-
 @router.callback_query(F.data.startswith("btn"))
 async def send_reply(callback: types.CallbackQuery):
     user_id = callback.from_user.id
